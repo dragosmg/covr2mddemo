@@ -6,7 +6,7 @@
 #'
 #' @export
 #' @examples
-#' add_two(2)
+#' add_three(2)
 add_three <- function(x) {
   if (!rlang::is_double(x)) {
     cli::cli_abort(

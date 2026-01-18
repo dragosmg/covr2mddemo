@@ -16,5 +16,5 @@ a numeric vector
 Add three to a numeric vector
 }
 \examples{
-add_two(2)
+add_three(2)
 }
