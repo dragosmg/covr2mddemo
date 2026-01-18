@@ -8,7 +8,7 @@
 #' @examples
 #' add_one(2)
 add_one <- function(x) {
-  if (!rlang::is_double(x)) {
+  if (!is.numeric(x)) {
     cli::cli_abort(
       "`x` must be numeric. You supplied a {.class {class(x)}}"
     )
