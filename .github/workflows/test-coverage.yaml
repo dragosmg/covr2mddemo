@@ -36,10 +36,16 @@ jobs:
             clean = FALSE,
             install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
+          print("==============")
+          print("head coverage:")
+          print("==============")
           print(head_cov)
 
           system2("git", c("checkout", "main"))
 
+          print("==============")
+          print("base coverage:")
+          print("==============")
           base_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = FALSE,
@@ -48,6 +54,8 @@ jobs:
           print(base_cov)
 
           owner_repo <- stringr::str_split_1(${{ github.repository }}, "/")
+          print(owner_repo[[1]])
+          print(owner_repo[[2]])
 
           github_comment <- covr2md::compose_comment(
             head_coverage = head_cov,
