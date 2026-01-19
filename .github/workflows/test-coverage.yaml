@@ -53,7 +53,7 @@ jobs:
           )
           print(base_cov)
 
-          owner_repo <- stringr::str_split_1(${{ github.repository }}, "/")
+          owner_repo <- stringr::str_split_1("${{ github.repository }}", "/")
           print(owner_repo[[1]])
           print(owner_repo[[2]])
 
