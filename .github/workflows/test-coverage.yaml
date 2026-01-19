@@ -41,14 +41,14 @@ jobs:
           head_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "head_package")
           )
           print("==============")
           print("head coverage:")
           print("==============")
           print(head_cov)
 
-          system("git checkout main")
+          # system("git checkout main")
 
           print("==============")
           print("base coverage:")
@@ -57,7 +57,7 @@ jobs:
             path= "base-branch/",
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "base_package")
           )
           print(base_cov)
 
@@ -90,7 +90,7 @@ jobs:
         if: always()
         run: |
           ## --------------------------------------------------------------------
-          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
+          find '${{ runner.temp }}/head_package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
       - name: Upload test results
@@ -98,4 +98,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
-          path: ${{ runner.temp }}/package
+          path: ${{ runner.temp }}/head_package
