@@ -54,7 +54,7 @@ jobs:
           print("base coverage:")
           print("==============")
           base_cov <- covr::package_coverage(
-            path= "base-branch/",
+            path= "base-branch",
             quiet = FALSE,
             clean = TRUE,
             install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "base_package")
