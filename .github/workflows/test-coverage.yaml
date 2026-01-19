@@ -41,7 +41,7 @@ jobs:
           print("==============")
           print(head_cov)
 
-          system2("git", c("checkout", "main"))
+          system("git checkout main")
 
           print("==============")
           print("base coverage:")
