@@ -53,7 +53,7 @@ jobs:
           print("==============")
           print(head_cov)
 
-          fs::dir_delete()
+          fs::dir_delete("package")
 
           system("git checkout main")
 
