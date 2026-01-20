@@ -33,7 +33,12 @@ jobs:
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2, github::dragosmg/covr2md, any::stringr
+          extra-packages: |
+            any::covr
+            any::xml2
+            github::dragosmg/covr2md
+            any::stringr
+            any::fs
           needs: coverage
 
       - name: Test coverage
@@ -48,7 +53,9 @@ jobs:
           print("==============")
           print(head_cov)
 
-          # system("git checkout main")
+          fs::dir_delete("package")
+
+          system("git checkout main")
 
           print("==============")
           print("base coverage:")
