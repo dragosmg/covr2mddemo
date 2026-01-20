@@ -43,7 +43,7 @@ jobs:
 
       - name: Test coverage
         run: |
-          file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "head_package")
+          file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
 
           head_cov <- covr::package_coverage(
             quiet = FALSE,
@@ -102,7 +102,7 @@ jobs:
         if: always()
         run: |
           ## --------------------------------------------------------------------
-          find '${{ runner.temp }}/head_package' -name 'testthat.Rout*' -exec cat '{}' \; || true
+          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
       - name: Upload test results
@@ -110,4 +110,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
-          path: ${{ runner.temp }}/head_package
+          path: ${{ runner.temp }}/package
