@@ -43,17 +43,20 @@ jobs:
 
       - name: Test coverage
         run: |
+          file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "head_package")
+
           head_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "head_package")
+            install_path = file_path
           )
           print("==============")
           print("head coverage:")
           print("==============")
           print(head_cov)
+          print("==============")
 
-          fs::dir_delete("package")
+          fs::dir_delete(file_path)
 
           system("git checkout main")
 
@@ -64,9 +67,11 @@ jobs:
             path= "/base-branch",
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "base_package")
+            install_path = file_path
           )
+
           print(base_cov)
+          print("==============")
 
           owner_repo <- stringr::str_split_1("${{ github.repository }}", "/")
           print(owner_repo[[1]])
