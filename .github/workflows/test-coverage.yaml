@@ -56,7 +56,7 @@ jobs:
           print(head_cov)
           print("==============")
 
-          fs::dir_delete(file_path)
+          # fs::dir_delete(file_path)
 
           system("git checkout main")
 
