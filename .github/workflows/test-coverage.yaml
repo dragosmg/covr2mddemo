@@ -33,7 +33,12 @@ jobs:
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2, github::dragosmg/covr2md, any::stringr
+          extra-packages: |
+            any::covr
+            any::xml2
+            github::dragosmg/covr2md
+            any::stringr
+            any::fs
           needs: coverage
 
       - name: Test coverage
@@ -41,14 +46,16 @@ jobs:
           head_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "head_package")
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
           print("==============")
           print("head coverage:")
           print("==============")
           print(head_cov)
 
-          # system("git checkout main")
+          fs::dir_delete()
+
+          system("git checkout main")
 
           print("==============")
           print("base coverage:")
@@ -57,7 +64,7 @@ jobs:
             path= "/base-branch",
             quiet = FALSE,
             clean = TRUE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "base_package")
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
           print(base_cov)
 
