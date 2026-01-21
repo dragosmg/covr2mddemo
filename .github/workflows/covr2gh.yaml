@@ -4,48 +4,76 @@ on: [push]
 
 jobs:
   job_1:
-    name: Add 3 and 7
+    name: Setup
     runs-on: ubuntu-latest
     steps:
-      - shell: bash
+      - name: Checkout head branch
+        uses: actions/checkout@v6
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Setup R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::covr
+            github::dragosmg/covr2md
+            any::stringr
+            any::fs
+          needs: coverage
+
+      - name: Test coverage
+        shell: Rscript {0}
         run: |
-          expr 3 + 7 > math-homework.txt
-      - name: Upload math result for job 1
+          file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+
+          head_cov <- covr::package_coverage(
+            quiet = FALSE,
+            clean = TRUE,
+            install_path = file_path
+          )
+
+          saveRDS(head_cov, "head_cov.RDS")
+
+      - name: Upload coverage result for head
         uses: actions/upload-artifact@v4
         with:
-          name: homework_pre
-          path: math-homework.txt
+          name: head_coverage
+          path: head_cov.RDS
 
   job_2:
-    name: Multiply by 9
+    name: Print total head coverage
     needs: job_1
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-      - name: Download math result for job 1
+      - name: Download head coverage result
         uses: actions/download-artifact@v5
         with:
-          name: homework_pre
-      - shell: bash
+          name: head_coverage
+      - shell: Rscript {0}bash
         run: |
-          value=`cat math-homework.txt`
-          expr $value \* 9 > math-homework.txt
-      - name: Upload math result for job 2
-        uses: actions/upload-artifact@v4
-        with:
-          name: homework_final
-          path: math-homework.txt
+          readRDS("head_cov.RDS")
+          covr::percent_coverage(head_cov)
+    #   - name: Upload math result for job 2
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: homework_final
+    #       path: math-homework.txt
 
-  job_3:
-    name: Display results
-    needs: job_2
-    runs-on: macOS-latest
-    steps:
-      - name: Download math result for job 2
-        uses: actions/download-artifact@v5
-        with:
-          name: homework_final
-      - name: Print the final result
-        shell: bash
-        run: |
-          value=`cat math-homework.txt`
-          echo The result is $value
+#   job_3:
+#     name: Display results
+#     needs: job_2
+#     runs-on: macOS-latest
+#     steps:
+#       - name: Download math result for job 2
+#         uses: actions/download-artifact@v5
+#         with:
+#           name: homework_final
+#       - name: Print the final result
+#         shell: bash
+#         run: |
+#           value=`cat math-homework.txt`
+#           echo The result is $value
