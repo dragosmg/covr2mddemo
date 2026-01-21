@@ -36,6 +36,8 @@ jobs:
             install_path = file_path
           )
 
+          print(head_cov)
+
           saveRDS(head_cov, "head_cov.RDS")
 
       - name: Upload coverage result for head
