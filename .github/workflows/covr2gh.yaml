@@ -53,7 +53,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: head_coverage
-      - shell: Rscript {0}bash
+      - shell: Rscript {0}
         run: |
           readRDS("head_cov.RDS")
           covr::percent_coverage(head_cov)
