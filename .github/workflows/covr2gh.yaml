@@ -56,10 +56,10 @@ jobs:
         with:
           name: head_coverage
       - name: Print coverage
-        shell: Rscript {0}
         run: |
           head_coverage <- readRDS("head_cov.RDS")
           print(head_coverage)
+        shell: Rscript {0}
     #   - name: Upload math result for job 2
     #     uses: actions/upload-artifact@v4
     #     with:
