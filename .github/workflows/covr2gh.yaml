@@ -136,7 +136,7 @@ jobs:
           post_comment(
             github_comment,
             owner = owner_repo[[1]],
-            repo = "owner_repo[[2]],
+            repo = owner_repo[[2]],
             pr_number = ${{ github.event.pull_request.number }},
             comment_id = 123456789
           )
