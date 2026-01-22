@@ -113,21 +113,15 @@ jobs:
           base_coverage <- readRDS("base_coverage/base_cov.RDS")
           print(base_coverage)
 
-          owner_repo <- stringr::str_split_1("${{ github.repository }}", "/")
-          print(owner_repo[[1]])
-          print(owner_repo[[2]])
-
           github_comment <- covr2md::compose_comment(
             head_coverage = head_coverage,
             base_coverage = base_coverage,
-            owner = owner_repo[[1]],
-            repo = owner_repo[[2]],
+            repo = "${{ github.repository }}",
             pr_number = ${{ github.event.pull_request.number }}
           )
 
-          comment_id <- covr2md:::get_comment_id(
-            owner = owner_repo[[1]],
-            repo = owner_repo[[2]],
+          comment_id <- covr2md::get_comment_id(
+            repo = "${{ github.repository }}",
             pr_number = ${{ github.event.pull_request.number }}
           )
 
@@ -135,8 +129,7 @@ jobs:
 
           post_comment(
             github_comment,
-            owner = owner_repo[[1]],
-            repo = owner_repo[[2]],
+            repo = "${{ github.repository }}",
             pr_number = ${{ github.event.pull_request.number }},
             comment_id = comment_id
           )
