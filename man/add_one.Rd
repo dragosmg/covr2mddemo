@@ -17,4 +17,5 @@ Add one to a numeric vector
 }
 \examples{
 add_one(2)
+add_one(4)
 }
