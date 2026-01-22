@@ -1,6 +1,9 @@
-name: Share data between jobs
+name: Code coverage summary
 
-on: [push]
+on:
+  push:
+    branches: [main, master]
+  pull_request:
 
 jobs:
   job_1:
