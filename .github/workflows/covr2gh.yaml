@@ -54,6 +54,8 @@ jobs:
         with:
           ref: main
 
+
+          # TODO re-install r dependencies. just in case there are any changes
       - name: Calculate base coverage
         shell: Rscript {0}
         run: |
@@ -88,16 +90,10 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Setup R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            any::covr
-            github::dragosmg/covr2md
-            any::stringr
-            any::fs
-          needs: coverage
-
+      - name: Install {covr2md}
+        shell: Rscript {0}
+        run: |
+          pak::pkg_install("dragosmg/covr2md")
       - name: Download head coverage result
         uses: actions/download-artifact@v5
         with:
