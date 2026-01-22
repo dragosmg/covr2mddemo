@@ -106,9 +106,9 @@ jobs:
       - name: Print coverage
         run: |
           library(covr)
-          head_coverage <- readRDS("head_cov.RDS")
+          head_coverage <- readRDS("head_coverage/head_cov.RDS")
           print(head_coverage)
-          base_coverage <- readRDS("base_cov.RDS")
+          base_coverage <- readRDS("base_coverage/base_cov.RDS")
           print(base_coverage)
         shell: Rscript {0}
     #   - name: Upload math result for job 2
