@@ -125,7 +125,7 @@ jobs:
             pr_number = ${{ github.event.pull_request.number }}
           )
 
-          comment_id <- covr:::get_comment_id(
+          comment_id <- covr2md:::get_comment_id(
             owner = owner_repo[[1]],
             repo = owner_repo[[2]],
             pr_number = ${{ github.event.pull_request.number }}
