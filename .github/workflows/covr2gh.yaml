@@ -85,7 +85,7 @@ jobs:
           path: base_cov.RDS
 
   job_2:
-    name: Print total head coverage
+    name: Post coverage summary comment
     needs: job_1
     runs-on: ubuntu-latest
     env:
@@ -106,12 +106,12 @@ jobs:
             github::dragosmg/covr2md
             any::stringr
 
-      - name: Download head coverage result
+      - name: Download coverage results
         uses: actions/download-artifact@v7
 
       - name: Print coverage
         run: |
-          library(covr)
+          library(covr) # for the print method
           head_coverage <- readRDS("head_coverage/head_cov.RDS")
           print(head_coverage)
           base_coverage <- readRDS("base_coverage/base_cov.RDS")
