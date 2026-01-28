@@ -51,7 +51,7 @@ jobs:
 
           writeLines(coverage_badge, "badge.svg")
 
-      - name: Upload coverage result for head
+      - name: Upload coverage result and badge for head
         uses: actions/upload-artifact@v6
         with:
           name: head_coverage
