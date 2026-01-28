@@ -36,7 +36,7 @@ jobs:
           extra-packages: |
             any::covr
             any::xml2
-            github::dragosmg/covr2md
+            github::dragosmg/covr2gh
             any::stringr
             any::fs
           needs: coverage
@@ -76,7 +76,7 @@ jobs:
           print(owner_repo[[1]])
           print(owner_repo[[2]])
 
-          github_comment <- covr2md::compose_comment(
+          github_comment <- covr2gh::compose_comment(
             head_coverage = head_cov,
             base_coverage = base_cov,
             owner = owner_repo[[1]],
