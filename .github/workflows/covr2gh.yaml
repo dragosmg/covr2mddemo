@@ -28,11 +28,7 @@ jobs:
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: |
-            any::covr
-            github::dragosmg/covr2md
-            any::stringr
-            any::fs
+          extra-packages: any::covr
           needs: coverage
 
       - name: Calculate head coverage
@@ -50,19 +46,30 @@ jobs:
 
           saveRDS(head_cov, "head_cov.RDS")
 
+          coverage <- covr::percent_coverage(head_cov)
+          coverage_badge <- covr2md::generate_badge(coverage)
+
+          writeLines(coverage_badge, "badge.svg")
+
       - name: Upload coverage result for head
         uses: actions/upload-artifact@v6
         with:
           name: head_coverage
-          path: head_cov.RDS
+          path: |
+            head_cov.RDS
+            badge.svg
 
       - name: Checkout base / target branch
         uses: actions/checkout@v6
         with:
           ref: main
 
+      - name: Re-install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::covr
+          needs: coverage
 
-          # TODO re-install r dependencies. just in case there are any changes
       - name: Calculate base coverage
         shell: Rscript {0}
         run: |
