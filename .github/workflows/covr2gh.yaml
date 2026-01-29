@@ -7,7 +7,7 @@ on:
 
 permissions:
   pull-requests: write # for commenting on PR
-  contents: write
+  contents: write # for adding the badges to the covr2gh-storage branch
 
 jobs:
   job1:
@@ -33,27 +33,27 @@ jobs:
             dragosmg/covr2gh
           needs: coverage
 
-      - name: Calculate head coverage & build badge
-        shell: Rscript {0}
+      - name: Calculate head coverage & make badge
         run: |
           temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
-          file_path <- file.path(temp_path, "package")
+          pkg_path <- file.path(temp_path, "package_head")
+          head_cov_path <- file.path(temp_path, "head_cov.RDS")
+          badge_path <- file.path(temp_path, "coverage_badge.svg")
 
           head_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = TRUE,
-            install_path = file_path
+            install_path = pkg_path
           )
 
-          saveRDS(head_cov, "head_cov.RDS")
+          saveRDS(head_cov, head_cov_path)
 
-          coverage_perc <- covr::percent_coverage(head_cov)
-
-          coverage_badge <- covr2gh::generate_badge(coverage_perc)
-
-          badge_path <- file.path(temp_path, "coverage_badge.svg")
+          coverage_badge <- head_cov |>
+            covr::percent_coverage() |>
+            covr2gh::generate_badge()
 
           writeLines(coverage_badge, badge_path)
+        shell: Rscript {0}
 
       - name: Upload coverage result for head
         uses: actions/upload-artifact@v6
@@ -125,17 +125,17 @@ jobs:
       - name: Calculate base coverage
         shell: Rscript {0}
         run: |
-          file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+          temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
+          pkg_path <- file.path(temp_path, "package_base")
+          base_cov_path <- file.path(temp_path, "base_cov.RDS")
 
           base_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = TRUE,
-            install_path = file_path
+            install_path = pkg_path
           )
 
-          print(base_cov)
-
-          saveRDS(base_cov, "base_cov.RDS")
+          saveRDS(base_cov, base_cov_path)
 
       - name: Upload coverage result for base
         uses: actions/upload-artifact@v6
@@ -171,10 +171,20 @@ jobs:
 
       - name: Post coverage comment
         run: |
+          # old paths
+          # head_cov_path <- "head_coverage/head_cov.RDS"
+          # base_cov_path <- "base_coverage/base_cov.RDS"
+
+          # new paths
+          temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
+          head_cov_path <- file.path(temp_path, "head_cov.RDS")
+          base_cov_path <- file.path(temp_path, "base_cov.RDS")
+
           library(covr) # for the print method
-          head_coverage <- readRDS("head_coverage/head_cov.RDS")
+
+          head_coverage <- readRDS(head_cov_path)
           print(head_coverage)
-          base_coverage <- readRDS("base_coverage/base_cov.RDS")
+          base_coverage <- readRDS(base_cov_path)
           print(base_coverage)
 
           github_comment <- covr2gh::compose_comment(
