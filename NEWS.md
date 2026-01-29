@@ -1,4 +1,4 @@
-# covr2mddemo (development version)
+# covr2ghdemo (development version)
 
 * `add_three()` adds three to a numeric vector.
 * `add_two()` adds two to a numeric vector.

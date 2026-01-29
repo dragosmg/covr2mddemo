@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(covr2mddemo)
+library(covr2ghdemo)
 
-test_check("covr2mddemo")
+test_check("covr2ghdemo")
