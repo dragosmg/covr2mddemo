@@ -54,7 +54,7 @@ jobs:
             glue::glue("Coverage is: {coverage_perc}")
           )
 
-          coverage_badge <- covr2gh::generate_badge(coverage)
+          coverage_badge <- covr2gh::generate_badge(coverage_perc)
 
           writeLines(coverage_badge, "coverage_badge.svg")
 
