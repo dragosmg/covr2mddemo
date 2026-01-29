@@ -36,7 +36,8 @@ jobs:
       - name: Calculate head coverage & build badge
         shell: Rscript {0}
         run: |
-          file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+          temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
+          file_path <- file.path(temp_path, "package")
 
           head_cov <- covr::package_coverage(
             quiet = FALSE,
@@ -58,9 +59,9 @@ jobs:
 
           print(coverage_badge)
 
-          print($RUNNER_TEMP)
+          badge_path <- file.path(temp_path, "coverage_badge.svg")
 
-          writeLines(coverage_badge, "$RUNNER_TEMP/coverage_badge.svg")
+          writeLines(coverage_badge, badge_path)
 
       - name: Upload coverage result and badge for head
         uses: actions/upload-artifact@v6
@@ -116,7 +117,7 @@ jobs:
           git pull origin covr2gh-storage
 
           mkdir -p "badges/${{ github.head_ref }}_${{ github.sha}}"
-          cp "${{ github.workspace }}/head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}_${{ github.sha}}/coverage_badge.svg"
+          cp "$RUNNER_TEMP/coverage_badge.svg" "badges/${{ github.head_ref }}_${{ github.sha}}/coverage_badge.svg"
 
           git add "badges/${{ github.head_ref }}_${{ github.sha }}/coverage_badge.svg"
 
