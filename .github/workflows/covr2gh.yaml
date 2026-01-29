@@ -153,11 +153,12 @@ jobs:
           temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
           head_cov_path <- file.path(temp_path, "head_cov.RDS")
           base_cov_path <- file.path(temp_path, "base_cov.RDS")
+          comment_path <- file.path(temp_path, "comment.md")
 
           head_coverage <- readRDS(head_cov_path)
           base_coverage <- readRDS(base_cov_path)
 
-          github_comment <- covr2gh::compose_comment(
+          comment <- covr2gh::compose_comment(
             head_coverage = head_coverage,
             base_coverage = base_coverage,
             repo = "${{ github.repository }}",
@@ -169,18 +170,16 @@ jobs:
             pr_number = ${{ github.event.pull_request.number }}
           )
 
-          covr2gh::post_comment(
-            github_comment,
+          post_response <- covr2gh::post_comment(
+            comment,
             repo = "${{ github.repository }}",
             pr_number = ${{ github.event.pull_request.number }},
             comment_id = comment_id
           )
+
+          writeLines(comment, comment_path)
         shell: Rscript {0}
 
       - name: Job summary
         run: |
-          echo "This is the lead in sentence for the list" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY # this is a blank line
-          echo "- Lets add a bullet point" >> $GITHUB_STEP_SUMMARY
-          echo "- Lets add a second bullet point" >> $GITHUB_STEP_SUMMARY
-          echo "- How about a third one?" >> $GITHUB_STEP_SUMMARY
+          cat "$RUNNER_TEMP/comment.md" >> $GITHUB_STEP_SUMMARY
