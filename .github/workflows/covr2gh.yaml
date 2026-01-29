@@ -70,12 +70,9 @@ jobs:
 
       - name: Initialise storage branch
         run: |
-          # Switch to the branch if it already exists
-          git switch covr2gh-storage || true
-          git pull origin covr2gh-storage || true
-
-          # Create the branch if it doesn't exist yet
-          git checkout --orphan covr2gh-storage || true
+          git fetch origin covr2gh-storage || true
+          git switch covr2gh-storage || git checkout --orphan covr2gh-storage
+          git pull --rebase origin covr2gh-storage || true
 
           # Ensure that the bare minimum components exist in the branch
           mkdir -p badges
