@@ -102,6 +102,9 @@ jobs:
           git push -u origin covr2gh-storage
         shell: bash
 
+      - name: Download coverage results
+        uses: actions/download-artifact@v7
+
       - name: Commit badge
         working-directory: badges
         run: |
@@ -185,12 +188,6 @@ jobs:
           print(head_coverage)
           base_coverage <- readRDS("base_coverage/base_cov.RDS")
           print(base_coverage)
-
-          coverage_badge <- head_coverage |>
-            covr::percent_coverage() |>
-            covr2gh::generate_badge()
-
-          writeLines(coverage_badge, "coverage_badge.svg")
 
           github_comment <- covr2gh::compose_comment(
             head_coverage = head_coverage,
