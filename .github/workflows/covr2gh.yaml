@@ -87,7 +87,9 @@ jobs:
           touch README.md badges/.gitkeep
 
           mkdir -p "badges/${{ github.head_ref }}"
-          cp "head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}/coverage_badge.svg"
+          # cp "head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}/coverage_badge.svg"
+          cp "/coverage_badge.svg" "badges/${{ github.head_ref }}/coverage_badge.svg"
+
 
 
           # Copy necessary files and folders to a temporary location
