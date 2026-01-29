@@ -10,8 +10,8 @@ permissions:
   contents: write # for adding the badges to the covr2gh-storage branch
 
 jobs:
-  job1:
-    name: Calculate coverage
+  covr2gh:
+    name: Calculate coverage & post comment
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
