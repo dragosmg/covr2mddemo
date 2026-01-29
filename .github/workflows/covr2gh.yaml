@@ -48,9 +48,13 @@ jobs:
 
           saveRDS(head_cov, "head_cov.RDS")
 
-          coverage_badge <- head_cov |>
-            covr::percent_coverage() |>
-            covr2gh::generate_badge()
+          coverage_perc <- covr::percent_coverage(head_cov)
+
+          print(
+            glue::glue("Coverage is: {coverage_perc}")
+          )
+
+          coverage_badge <- covr2gh::generate_badge(coverage)
 
           writeLines(coverage_badge, "coverage_badge.svg")
 
