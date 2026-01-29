@@ -107,7 +107,7 @@ jobs:
           mkdir -p "badges/${{ github.head_ref }}_${{ github.sha}}"
           cp "head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}_${{ github.sha}}/coverage_badge.svg"
 
-          git add "badges/${{ github.head_ref }}_${{ github.sha }}/badge.svg"
+          git add "badges/${{ github.head_ref }}_${{ github.sha }}/coverage_badge.svg"
 
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Actions"
