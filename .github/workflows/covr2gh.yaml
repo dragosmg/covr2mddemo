@@ -86,12 +86,6 @@ jobs:
           mkdir -p badges
           touch README.md badges/.gitkeep
 
-          mkdir -p "badges/${{ github.head_ref }}"
-          # cp "head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}/coverage_badge.svg"
-          cp "/coverage_badge.svg" "badges/${{ github.head_ref }}/coverage_badge.svg"
-
-
-
           # Copy necessary files and folders to a temporary location
           mkdir -p /tmp/${{ github.sha }}
           echo "Copying badges/ to /tmp/${{ github.sha }}"
@@ -120,7 +114,7 @@ jobs:
           git pull origin covr2gh-storage
 
           mkdir -p "badges/${{ github.head_ref }}_${{ github.sha}}"
-          cp "head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}_${{ github.sha}}/coverage_badge.svg"
+          cp "${{ github.workspace }}/head_coverage/coverage_badge.svg" "badges/${{ github.head_ref }}_${{ github.sha}}/coverage_badge.svg"
 
           git add "badges/${{ github.head_ref }}_${{ github.sha }}/coverage_badge.svg"
 
