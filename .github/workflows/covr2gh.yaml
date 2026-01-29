@@ -33,7 +33,7 @@ jobs:
             dragosmg/covr2gh
           needs: coverage
 
-      - name: Calculate head coverage
+      - name: Calculate head coverage & build badge
         shell: Rscript {0}
         run: |
           file_path <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
@@ -48,11 +48,74 @@ jobs:
 
           saveRDS(head_cov, "head_cov.RDS")
 
+          coverage_badge <- head_cov |>
+            covr::percent_coverage() |>
+            covr2gh::generate_badge()
+
+          writeLines(coverage_badge, "coverage_badge.svg")
+
       - name: Upload coverage result and badge for head
         uses: actions/upload-artifact@v6
         with:
           name: head_coverage
-          path: head_cov.RDS
+          path: |
+            head_cov.RDS
+            coverage_badge.svg
+          retention-days: 5
+
+      - name: Configure git identity
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions"
+
+      - name: Initialise storage branch
+        run: |
+          # Switch to the branch if it already exists
+          git switch covr2gh-storage || true
+          git pull origin covr2gh-storage || true
+
+          # Create the branch if it doesn't exist yet
+          git checkout --orphan covr2gh-storage || true
+
+          # Ensure that the bare minimum components exist in the branch
+          mkdir -p badges
+          touch README.md badges/.gitkeep
+
+          # Copy necessary files and folders to a temporary location
+          mkdir -p /tmp/${{ github.sha }}
+          echo "Copying badges/ to /tmp/${{ github.sha }}"
+          cp -r .git README.md badges /tmp/${{ github.sha }}
+
+          # Remove everything else
+          # Attribution: https://unix.stackexchange.com/a/77313
+          rm -rf ..?* .[!.]* *
+
+          # Restore files from the temporary location
+          echo "Copying badges/ from /tmp/${{ github.sha }}"
+          cp -r /tmp/${{ github.sha }}/.git /tmp/${{ github.sha }}/README.md /tmp/${{ github.sha }}/badges .
+          rm -rf /tmp/${{ github.sha }}
+          git add --all -f
+          git commit -m "Update storage branch: $(date)" || true
+          git push -u origin covr2gh-storage
+        shell: bash
+
+      - name: Commit badge
+        working-directory: badges
+        run: |
+          git switch covr2gh-storage || true
+          git pull origin covr2gh-storage
+
+          mkdir -p "${{ github.head_ref }}"
+          cp "$RUNNER_TEMP/coverage_badge.svg" "${{ github.head_ref }}/coverage_badge.svg"
+
+          git add "${{ github.head_ref }}/badge.svg"
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions"
+
+          git commit -m "Add/Update badge: ${{ github.sha }}" || true
+          git push
+        shell: bash
 
       - name: Checkout base / target branch
         uses: actions/checkout@v6
@@ -85,6 +148,7 @@ jobs:
         with:
           name: base_coverage
           path: base_cov.RDS
+          retention-days: 5
 
   job2:
     name: Post coverage summary comment
@@ -123,7 +187,7 @@ jobs:
             covr::percent_coverage() |>
             covr2gh::generate_badge()
 
-          writeLines(coverage_badge, "badge.svg")
+          writeLines(coverage_badge, "coverage_badge.svg")
 
           github_comment <- covr2gh::compose_comment(
             head_coverage = head_coverage,
@@ -137,7 +201,8 @@ jobs:
             pr_number = ${{ github.event.pull_request.number }}
           )
 
-          print(comment_id)
+          glue::glue("Comment ID is: {comment_id}", .null = "`NULL`") |>
+            print()
 
           covr2gh::post_comment(
             github_comment,
