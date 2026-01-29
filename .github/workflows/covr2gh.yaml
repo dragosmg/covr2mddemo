@@ -58,7 +58,9 @@ jobs:
 
           print(coverage_badge)
 
-          writeLines(coverage_badge, "coverage_badge.svg")
+          print($RUNNER_TEMP)
+
+          writeLines(coverage_badge, "$RUNNER_TEMP/coverage_badge.svg")
 
       - name: Upload coverage result and badge for head
         uses: actions/upload-artifact@v6
