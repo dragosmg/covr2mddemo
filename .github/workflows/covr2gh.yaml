@@ -176,7 +176,7 @@ jobs:
       - name: Download coverage results
         uses: actions/download-artifact@v7
 
-      - name: Print coverage
+      - name: Post coverage comment
         run: |
           library(covr) # for the print method
           head_coverage <- readRDS("head_coverage/head_cov.RDS")
