@@ -202,11 +202,11 @@ jobs:
             dragosmg/covr2gh
           needs: coverage
 
-      - name: Calculate main coverage
+      - name: Calculate coverage & make badge
         run: |
           temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
           pkg_path <- file.path(temp_path, "package_base")
-          main_cov_path <- file.path(temp_path, "main_cov.RDS")
+          badge_path <- file.path(temp_path, "coverage_badge.svg")
 
           main_cov <- covr::package_coverage(
             quiet = FALSE,
@@ -214,12 +214,24 @@ jobs:
             install_path = pkg_path
           )
 
-          perc_cov <- round(covr::percent_coverage(main_cov))
-          perc_cov_str <- paste0("PERC_COV=", perc_cov, "%\n")
+          main_cov_badge <- main_cov |>
+            covr::percent_coverage() |>
+            covr2gh::generate_badge()
 
-          cat(perc_cov_str, file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+          writeLines(main_cov_badge, badge_path)
         shell: Rscript {0}
 
-      - name: Use env var
+      - name: Commit badge
+        working-directory: badges
         run: |
-          echo "Coverage for main is: $PERC_COV"
+          git switch covr2gh-storage || true
+          git pull origin covr2gh-storage
+
+          mkdir -p "${{ github.ref_name }}"
+          cp "$RUNNER_TEMP/coverage_badge.svg" "${{ github.ref_name }}/coverage_badge.svg"
+
+          git add "${{ github.ref_name }}/coverage_badge.svg"
+
+          git commit -m "Add/Update badge: ${{ github.sha }}" || true
+          git push
+        shell: bash
