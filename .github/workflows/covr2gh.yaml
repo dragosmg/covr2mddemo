@@ -1,4 +1,4 @@
-name: covr2gh summary
+name: Coverage summary
 
 on:
   push:
