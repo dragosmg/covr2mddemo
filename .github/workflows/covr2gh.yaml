@@ -71,7 +71,7 @@ jobs:
 
       - name: Attach storage worktree (orphan if missing)
         run: |
-          ORIGINAL_REF=$(git symbolic-ref --short HEAD)
+          ORIGINAL_REF="${GITHUB_REF_NAME}"
 
           git fetch origin covr2gh-storage || true
 
