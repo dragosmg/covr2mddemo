@@ -215,9 +215,9 @@ jobs:
           )
 
           perc_cov <- round(covr::percent_coverage(main_cov))
-          perc_cov <- paste0()
+          perc_cov_str <- paste0("PERC_COV=", perc_cov, "%\n")
 
-          cat(paste0("PERC_COV=", perc_cov, "%\n"), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+          cat(perc_cov_str, file = Sys.getenv("GITHUB_ENV"), append = TRUE)
         shell: Rscript {0}
 
       - name: Use env var
