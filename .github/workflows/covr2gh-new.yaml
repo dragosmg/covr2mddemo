@@ -59,6 +59,11 @@ jobs:
           writeLines(badge, badge_path)
         shell: Rscript {0}
 
+      - name: Configure git identity
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions"
+
       - name: Attach / create storage branch (worktree)
         run: |
           ORIGINAL_REF="${GITHUB_REF_NAME}"
