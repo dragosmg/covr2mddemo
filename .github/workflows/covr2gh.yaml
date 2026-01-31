@@ -142,7 +142,7 @@ jobs:
           git fetch origin "${{ github.base_ref }}"
           git worktree add base "${{ github.base_ref }}"
 
-      - name: Re-install R dependencies  # in case there are any differences in deps
+      - name: Re-install R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
@@ -199,6 +199,24 @@ jobs:
 
           writeLines(comment, comment_path)
         shell: Rscript {0}
+
+      - name: Cleanup worktrees
+        if: always()
+        run: |
+          echo "Cleaning up git worktrees"
+
+          # Remove storage worktree if it exists
+          if [ -d storage ]; then
+            git worktree remove storage --force
+          fi
+
+          # Remove base worktree if it exists
+          if [ -d base ]; then
+            git worktree remove base --force
+          fi
+
+          # Prune stale worktree metadata
+          git worktree prune
 
       - name: Job summary
         run: |
