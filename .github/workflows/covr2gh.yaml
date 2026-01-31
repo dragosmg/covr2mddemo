@@ -10,8 +10,9 @@ permissions:
   contents: write # for adding the badges to the covr2gh-storage branch
 
 jobs:
-  covr2gh:
+  covr2gh-on-pr:
     name: Assess coverage & post comment
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +43,7 @@ jobs:
 
           head_cov <- covr::package_coverage(
             quiet = FALSE,
-            clean = TRUE,
+            clean = FALSE,
             install_path = pkg_path
           )
 
@@ -133,7 +134,7 @@ jobs:
 
           base_cov <- covr::package_coverage(
             quiet = FALSE,
-            clean = TRUE,
+            clean = FALSE,
             install_path = pkg_path
           )
 
@@ -177,3 +178,48 @@ jobs:
       - name: Job summary
         run: |
           cat "$RUNNER_TEMP/comment.md" >> $GITHUB_STEP_SUMMARY
+
+  covr2gh-on-push:
+    name: Coverage & badge for main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Setup R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::covr
+            dragosmg/covr2gh
+          needs: coverage
+
+      - name: Calculate main coverage
+        run: |
+          temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
+          pkg_path <- file.path(temp_path, "package_base")
+          main_cov_path <- file.path(temp_path, "main_cov.RDS")
+
+          main_cov <- covr::package_coverage(
+            quiet = FALSE,
+            clean = FALSE,
+            install_path = pkg_path
+          )
+
+          perc_cov <- round(covr::percent_coverage(main_cov))
+          perc_cov <- paste0()
+
+          cat(paste0("PERC_COV=", perc_cov, "%\n"), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+        shell: Rscript {0}
+
+      - name: Use env var
+        run: |
+          echo "Coverage for main is: $PERC_COV"
