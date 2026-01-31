@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/dragosmg/covr2ghdemo/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dragosmg/covr2ghdemo/actions/workflows/R-CMD-check.yaml)
-![coverage](https://github.com/dragosmg/covr2ghdemo/blob/coverage-outputs/test_badge.svg)
+![coverage](https://raw.githubusercontent.com/dragosmg/covr2ghdemo/covr2gh-storage/badges/main/coverage_badge.svg)
 <!-- badges: end -->
 
 The goal of covr2ghdemo is to …
