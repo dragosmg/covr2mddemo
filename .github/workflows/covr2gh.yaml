@@ -222,13 +222,12 @@ jobs:
         shell: Rscript {0}
 
       - name: Commit badge
-        working-directory: badges
         run: |
           git switch covr2gh-storage || true
           git pull origin covr2gh-storage
 
-          mkdir -p "${{ github.ref_name }}"
-          cp "$RUNNER_TEMP/coverage_badge.svg" "${{ github.ref_name }}/coverage_badge.svg"
+          mkdir -p "badges/${{ github.ref_name }}"
+          cp "$RUNNER_TEMP/coverage_badge.svg" "badges/${{ github.ref_name }}/coverage_badge.svg"
 
           git add "${{ github.ref_name }}/coverage_badge.svg"
 
