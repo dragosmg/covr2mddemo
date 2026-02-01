@@ -7,8 +7,6 @@
 
 [![R-CMD-check](https://github.com/dragosmg/covr2ghdemo/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dragosmg/covr2ghdemo/actions/workflows/R-CMD-check.yaml)
 ![coverage](https://raw.githubusercontent.com/dragosmg/covr2ghdemo/covr2gh-storage/badges/main/coverage_badge.svg)
-[![Codecov test
-coverage](https://codecov.io/gh/dragosmg/covr2mddemo/graph/badge.svg)](https://app.codecov.io/gh/dragosmg/covr2mddemo)
 <!-- badges: end -->
 
 The goal of covr2ghdemo is to …
