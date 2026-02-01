@@ -7,6 +7,7 @@
 #' @export
 #' @examples
 #' add_one(2)
+#' add_one(4)
 add_one <- function(x) {
   if (!is.numeric(x)) {
     cli::cli_abort(
