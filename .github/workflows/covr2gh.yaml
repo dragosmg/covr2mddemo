@@ -6,10 +6,6 @@ on:
       - main
   pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   pull-requests: write # for commenting on PR
   contents: write # for adding the badges to the covr2gh-storage branch
