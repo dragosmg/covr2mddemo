@@ -176,6 +176,15 @@ jobs:
           git worktree remove base --force || true
           git worktree prune || true
 
+      - name: Upload coverage result for head
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage
+          path: |
+            ${{ runner.temp }}/head_cov.RDS
+            ${{ runner.temp }}/base_cov.RDS
+            ${{ runner.temp }}/coverage_badge.RDS
+          retention-days: 5
       - name: Job summary
         if: github.event_name == 'pull_request'
         run: |
