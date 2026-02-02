@@ -1,9 +1,6 @@
 name: Coverage summary
 
-on:
-  push:
-    branches: [main, master]
-  pull_request:
+on: workflow_dispatch
 
 permissions:
   pull-requests: write
