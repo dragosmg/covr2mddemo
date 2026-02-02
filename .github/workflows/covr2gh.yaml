@@ -1,22 +1,28 @@
 name: Coverage summary
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions:
   pull-requests: write # for commenting on PR
   contents: write # for adding the badges to the covr2gh-storage branch
 
 jobs:
-  covr2gh-on-pr:
-    name: Assess coverage & post comment
-    if: github.event_name == 'pull_request'
+  covr2gh:
+    name: Coverage & badge
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-
+      BADGE_BRANCH: ${{ github.head_ref || github.ref_name }}
+      LOCK_MAX_RETRIES: 5
+      LOCK_SLEEP: 10  # seconds
     steps:
-      - name: Checkout head branch
+      - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -31,134 +37,120 @@ jobs:
             dragosmg/covr2gh
           needs: coverage
 
-      - name: Calculate head coverage & make badge
+      - name: Head coverage & badge
         run: |
           temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
-          pkg_path <- file.path(temp_path, "package_head")
-          head_cov_path <- file.path(temp_path, "head_cov.RDS")
-          badge_path <- file.path(temp_path, "coverage_badge.svg")
 
           head_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = FALSE,
-            install_path = pkg_path
+            install_path = file.path(temp_path, "package_head")
           )
 
-          saveRDS(head_cov, head_cov_path)
+          saveRDS(head_cov, file.path(temp_path, "head_cov.RDS"))
 
-          coverage_badge <- head_cov |>
+          badge <- head_cov |>
             covr::percent_coverage() |>
             covr2gh::generate_badge()
 
-          writeLines(coverage_badge, badge_path)
+          writeLines(badge, file.path(temp_path, "coverage_badge.svg"))
         shell: Rscript {0}
-
-      - name: Upload coverage result for head
-        uses: actions/upload-artifact@v6
-        with:
-          name: head_coverage
-          path: ${{ runner.temp }}/head_cov.RDS
-          retention-days: 5
 
       - name: Configure git identity
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Actions"
 
-      - name: Initialise storage branch
+      - name: Storage branch (worktree)
+        if: github.event.pull_request.head.repo.fork == false || github.event_name != 'pull_request'
         run: |
-          # fetch & switch | create the covr2gh-storage branch
-          # rebase if needed
+          ORIGINAL_REF="${GITHUB_REF_NAME}"
+
+          # Attach or create storage branch
           git fetch origin covr2gh-storage || true
-          git switch covr2gh-storage || git checkout --orphan covr2gh-storage
-          git pull --rebase origin covr2gh-storage || true
 
-          # Ensure that the bare minimum components exist in the branch
-          mkdir -p badges
-          touch README.md badges/.gitkeep
+          if git show-ref --verify --quiet refs/remotes/origin/covr2gh-storage; then
+            git worktree add storage covr2gh-storage
+          else
+            git checkout --orphan covr2gh-storage
+            git reset --hard
 
-          # Copy necessary files and folders to a temporary location
-          mkdir -p /tmp/${{ github.sha }}
-          echo "Copying badges/ to /tmp/${{ github.sha }}"
-          cp -r .git README.md badges /tmp/${{ github.sha }}
+            mkdir -p badges
+            touch badges/.gitkeep
+            git add badges/.gitkeep
 
-          # Remove everything else
-          # Attribution: https://unix.stackexchange.com/a/77313
-          rm -rf ..?* .[!.]* *
+            echo "# Coverage badges" > README.md
+            git add README.md
+            git commit -m "Initialize covr2gh-storage branch"
+            git push origin covr2gh-storage
 
-          # Restore files from the temporary location
-          echo "Copying badges/ from /tmp/${{ github.sha }}"
-          cp -r /tmp/${{ github.sha }}/.git /tmp/${{ github.sha }}/README.md /tmp/${{ github.sha }}/badges .
-          rm -rf /tmp/${{ github.sha }}
-          git add --all -f
-          git commit -m "Update storage branch: $(date + '%Y-%m-%d %H:%M')" || true
-          git push -u origin covr2gh-storage
-        shell: bash
+            git checkout "$ORIGINAL_REF"
+            git worktree add storage covr2gh-storage
+          fi
 
-      - name: Commit badge
-        working-directory: badges
+          # Acquire storage lock with retry/backoff
+          LOCK_FILE=".lock"
+          RETRIES=0
+          while [ $RETRIES -lt $LOCK_MAX_RETRIES ]; do
+            if [ ! -f "$LOCK_FILE" ]; then
+              echo "Locked by $GITHUB_RUN_ID" > "$LOCK_FILE"
+              git add "$LOCK_FILE"
+              git commit -m "Lock storage branch ($GITHUB_RUN_ID)"
+              git push origin covr2gh-storage && break
+            else
+              echo "Lock exists, retrying ($RETRIES/$LOCK_MAX_RETRIES)..."
+              RETRIES=$((RETRIES+1))
+              sleep $LOCK_SLEEP
+            fi
+          done
+          if [ $RETRIES -eq $LOCK_MAX_RETRIES ]; then
+            echo "Could not acquire lock after $LOCK_MAX_RETRIES attempts, exiting."
+            exit 1
+          fi
+
+          # Commit badge
+          mkdir -p "badges/$BADGE_BRANCH"
+          cp "$RUNNER_TEMP/coverage_badge.svg" "badges/$BADGE_BRANCH/coverage_badge.svg"
+          git add badges
+          git commit -m "Update badge for $BADGE_BRANCH ($GITHUB_SHA)" || true
+          git push origin covr2gh-storage || true
+
+          # Release lock
+          git rm -f .lock || true
+          git commit -m "Release storage lock ($GITHUB_RUN_ID)" || true
+          git push origin covr2gh-storage || true
+
+      - name: Attach base branch worktree (PR only)
+        if: github.event_name == 'pull_request'
         run: |
-          # already on the covr2gh-storage branch
-          # so no need for checkout
+          git fetch origin "${{ github.base_ref }}"
+          git worktree add base "${{ github.base_ref }}"
 
-          mkdir -p "${{ github.head_ref }}"
-          cp "$RUNNER_TEMP/coverage_badge.svg" "${{ github.head_ref }}/coverage_badge.svg"
-
-          git add "${{ github.head_ref }}/coverage_badge.svg"
-
-          git commit -m "Add/Update badge: ${{ github.sha }}" || true
-          git push
-        shell: bash
-
-      - name: Checkout base / target branch
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.base_ref }}
-
-      - name: Re-install R dependencies  # in case there are any differences in deps
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            any::covr
-            dragosmg/covr2gh
-          needs: coverage
-
-      - name: Calculate base coverage
+      - name: Calculate base coverage (PR only)
+        if: github.event_name == 'pull_request'
+        working-directory: base
         run: |
           temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
-          pkg_path <- file.path(temp_path, "package_base")
-          base_cov_path <- file.path(temp_path, "base_cov.RDS")
 
           base_cov <- covr::package_coverage(
             quiet = FALSE,
             clean = FALSE,
-            install_path = pkg_path
+            install_path = file.path(temp_path, "package_base")
           )
 
-          saveRDS(base_cov, base_cov_path)
+          saveRDS(base_cov, file.path(temp_path, "base_cov.RDS"))
         shell: Rscript {0}
 
-      - name: Upload coverage result for base
-        uses: actions/upload-artifact@v6
-        with:
-          name: base_coverage
-          path: ${{ runner.temp }}/base_cov.RDS
-          retention-days: 5
-
-      - name: Post coverage comment
+      - name: Post coverage comment (PR only)
+        if: github.event_name == 'pull_request'
         run: |
-          # paths
           temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
-          head_cov_path <- file.path(temp_path, "head_cov.RDS")
-          base_cov_path <- file.path(temp_path, "base_cov.RDS")
-          comment_path <- file.path(temp_path, "comment.md")
-
-          head_coverage <- readRDS(head_cov_path)
-          base_coverage <- readRDS(base_cov_path)
+          head_cov <- readRDS(file.path(temp_path, "head_cov.RDS"))
+          base_cov <- readRDS(file.path(temp_path, "base_cov.RDS"))
 
           comment <- covr2gh::compose_comment(
-            head_coverage = head_coverage,
-            base_coverage = base_coverage,
+            head_coverage = head_cov,
+            base_coverage = base_cov,
             repo = "${{ github.repository }}",
             pr_number = ${{ github.event.pull_request.number }}
           )
@@ -166,102 +158,21 @@ jobs:
           covr2gh::post_comment(
             comment,
             repo = "${{ github.repository }}",
-            pr_number = ${{ github.event.pull_request.number }}
+            pr_number = ${{ github.event.pull_request.number }},
+            new = TRUE
           )
 
-          writeLines(comment, comment_path)
+          writeLines(comment, file.path(temp_path, "comment.md"))
         shell: Rscript {0}
+
+      - name: Cleanup worktrees
+        if: always()
+        run: |
+          git worktree remove storage --force || true
+          git worktree remove base --force || true
+          git worktree prune || true
 
       - name: Job summary
+        if: github.event_name == 'pull_request'
         run: |
           cat "$RUNNER_TEMP/comment.md" >> $GITHUB_STEP_SUMMARY
-
-  covr2gh-on-push:
-    name: Coverage & badge for main
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
-
-      - name: Setup R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-
-      - name: Setup R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            any::covr
-            dragosmg/covr2gh
-          needs: coverage
-
-      - name: Calculate coverage & make badge
-        run: |
-          temp_path <- normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/")
-          pkg_path <- file.path(temp_path, "package_base")
-          badge_path <- file.path(temp_path, "coverage_badge.svg")
-
-          main_cov <- covr::package_coverage(
-            quiet = FALSE,
-            clean = FALSE,
-            install_path = pkg_path
-          )
-
-          main_cov_badge <- main_cov |>
-            covr::percent_coverage() |>
-            covr2gh::generate_badge()
-
-          writeLines(main_cov_badge, badge_path)
-        shell: Rscript {0}
-
-      - name: Configure git identity
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Actions"
-
-      - name: Initialise / switch branch
-        run: |
-          git fetch origin covr2gh-storage || true
-          git switch covr2gh-storage || git checkout --orphan covr2gh-storage
-          git pull --rebase origin covr2gh-storage || true
-
-          # Ensure that the bare minimum components exist in the branch
-          mkdir -p badges
-          touch README.md badges/.gitkeep
-
-          # Copy necessary files and folders to a temporary location
-          mkdir -p /tmp/${{ github.sha }}
-          echo "Copying badges/ to /tmp/${{ github.sha }}"
-          cp -r .git README.md badges /tmp/${{ github.sha }}
-
-          # Remove everything else
-          # Attribution: https://unix.stackexchange.com/a/77313
-          rm -rf ..?* .[!.]* *
-
-          # Restore files from the temporary location
-          echo "Copying badges/ from /tmp/${{ github.sha }}"
-          cp -r /tmp/${{ github.sha }}/.git /tmp/${{ github.sha }}/README.md /tmp/${{ github.sha }}/badges .
-          rm -rf /tmp/${{ github.sha }}
-          git add --all -f
-          git commit -m "Update storage branch: $( + '%Y-%m-%d %H:%M')" || true
-          git push -u origin covr2gh-storage
-        shell: bash
-
-      - name: Commit badge
-        working-directory: badges
-        run: |
-          # already on the covr2gh-storage branch
-          # so no need for checkout
-
-          mkdir -p "${{ github.ref_name }}"
-          cp "$RUNNER_TEMP/coverage_badge.svg" "${{ github.ref_name }}/coverage_badge.svg"
-
-          git add "${{ github.ref_name }}/coverage_badge.svg"
-
-          git commit -m "Add/Update badge: ${{ github.sha }}" || true
-          git push
-        shell: bash
