@@ -16,7 +16,6 @@ add_three <- function(x) {
     }
 
     x |>
-        add_one() |>
-        add_one() |>
+        add_two() |>
         add_one()
 }
