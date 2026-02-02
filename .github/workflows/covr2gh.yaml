@@ -2,8 +2,13 @@ name: Coverage summary
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   pull-requests: write # for commenting on PR
