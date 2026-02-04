@@ -9,13 +9,13 @@
 #' add_three(2)
 #' add_three(4)
 add_three <- function(x) {
-  if (!rlang::is_double(x)) {
-    cli::cli_abort(
-      "`x` must be numeric. You supplied a {.class {class(x)}}"
-    )
-  }
+    if (!is.numeric(x)) {
+        cli::cli_abort(
+            "`x` must be numeric. You supplied a {.class {class(x)}}"
+        )
+    }
 
-  x |>
-    add_two() |>
-    add_one()
+    x |>
+        add_two() |>
+        add_one()
 }
